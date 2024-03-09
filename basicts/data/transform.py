@@ -39,7 +39,7 @@ def standard_transform(data: np.array, output_dir: str, train_index: list, histo
         pickle.dump(scaler, f)
 
     def normalize(x):
-        return (x - mean) / std
+        return (x - mean) / (std + 1e-8)
 
     data_norm = normalize(data)
     return data_norm

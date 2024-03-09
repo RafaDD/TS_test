@@ -60,7 +60,6 @@ class TimeSeriesForecastingDataset(Dataset):
             history_index.append(idx[1])
             history_data = self.data[history_index]
             future_data = self.data[idx[1], idx[2]]
-
         return future_data, history_data
 
     def __len__(self):

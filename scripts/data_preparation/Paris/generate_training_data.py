@@ -32,7 +32,11 @@ def generate_data(args: argparse.Namespace):
 
     # read data
     df = pd.read_csv(data_file_path)
-    df.fillna(0, inplace=True)
+    mean = df.mean(axis=1)
+    for i, col in enumerate(df):
+        df.iloc[:, i] = df.iloc[:, i].fillna(mean)
+    # print(df[42:50])
+    # df.fillna(0, inplace=True)
 
     intersections = df['iu_ac'] # intersection info
 
@@ -43,18 +47,17 @@ def generate_data(args: argparse.Namespace):
 
     data = data[..., target_channel]
     print("raw time series shape: {0}".format(data.shape))
-
+    
+    cols = np.array(df.columns)
+    # print(cols[:10])
 
     # split data
     l, n, f = data.shape
     num_samples = l - (history_seq_len + future_seq_len) + 1
-    train_num = 365 * 24
+    train_num = 8484 - 30 * 24
     valid_num = 30 * 24
     test_num = num_samples - train_num - valid_num
     test_gap = 29
-    print("number of training samples:{0}".format(train_num))
-    print("number of validation samples:{0}".format(valid_num))
-    print("number of test samples:{0}".format(test_num))
 
     index_list = []
     for t in range(history_seq_len, num_samples + history_seq_len):
@@ -62,9 +65,59 @@ def generate_data(args: argparse.Namespace):
         index_list.append(index)
 
     train_index = index_list[:train_num]
-    test_index = index_list[train_num: train_num + test_num: test_gap]
-    valid_index = index_list[train_num + test_num: train_num + test_num + valid_num]
+    # test_index = index_list[train_num: train_num + test_num: test_gap]
+    valid_index = index_list[train_num:train_num+valid_num]
     
+    def add_zero(t):
+            if t < 10:
+                t = '0' + str(t)
+            return str(t)
+
+    days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    def get_past_time(t):
+        h = int(t[11: 13]) - 1
+        d = int(t[8: 10])
+        m = int(t[5: 7])
+        y = int(t[:4])
+        if h < 0:
+            h = 23
+            d -= 1
+            if d == 0:
+                m -= 1
+                if m == 0:
+                    m = 12
+                    y -= 1
+                d = days[m - 1]
+        return str(y)+'-'+add_zero(m)+'-'+add_zero(d)+' '+add_zero(h)+':00:00'        
+
+    print(cols[8484])
+    test_ids = {}
+    test_index = []
+    test_df = pd.read_csv('datasets/Paris/loop_sensor_test_x.csv')
+    times = np.sort(test_df['t_1h'].unique())
+    i = 0
+    for t in times:
+        ids = np.array(test_df.loc[test_df["t_1h"] == t]['iu_ac'])
+        for id in ids:
+            if id in test_ids.keys():
+                test_ids[id].append(i)
+            else:
+                test_ids[id] = [i]
+        # print(1, test_ids[-1])
+        t_past = get_past_time(t)
+        index = int(np.where(cols == t_past)[0][0] + 1)
+        test_index.append((index - history_seq_len, index, index + future_seq_len))
+        i += 1
+        # print(2, test_index[-1])
+
+    print("number of training samples:{0}".format(train_num))
+    print("number of validation samples:{0}".format(valid_num))
+    print("number of test samples:{0}".format(len(test_index)))
+
+    print(1, train_index[:10])
+    print(2, test_index[:10])
+    
+    np.save('datasets/Paris/test_ids.npy', test_ids)
 
     # normalize data
     scaler = standard_transform
@@ -110,7 +163,7 @@ if __name__ == "__main__":
     DOY = True                  # if add day_of_year feature
 
     OUTPUT_DIR = "datasets/" + DATASET_NAME
-    DATA_FILE_PATH = "datasets/raw_data/{0}/transposed.csv".format(DATASET_NAME)
+    DATA_FILE_PATH = "datasets/raw_data/{0}/transposed_shortened.csv".format(DATASET_NAME)
     GRAPH_FILE_PATH = "datasets/raw_data/{0}/adj_{0}.pkl".format(DATASET_NAME)
 
     parser = argparse.ArgumentParser()

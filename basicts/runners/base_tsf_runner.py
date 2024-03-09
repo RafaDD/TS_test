@@ -391,6 +391,9 @@ class BaseTimeSeriesForecastingRunner(BaseRunner):
             returns_all (Dict): must contain keys: inputs, prediction, target
         """
 
+        pred = torch.squeeze(returns_all["prediction"]).detach().cpu().numpy()
+        np.save('result/Paris.npy', pred)
+
         # test performance of different horizon
         for i in self.evaluation_horizons:
             # For horizon i, only calculate the metrics **at that time** slice here.

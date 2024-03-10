@@ -12,7 +12,7 @@ def process(num):
 
     intersections = df['iu_ac'].unique()
     print(len(intersections))
-    times = np.sort(df['t_1h'].unique()) # [:20]
+    times = np.sort(df['t_1h'].unique())# [:200]
 
     begin, end = int(len(times)*num/10), int(len(times)*(num+1)/10)
     t_tmp = times[begin: end]

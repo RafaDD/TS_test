@@ -18,7 +18,7 @@ python scripts/data_preparation/Paris/generate_training_data.py
 to process data. We simply used average value to replace ```NaN``` values in this process.
 
 ## Step 2
-Train the data with a specific model, you may explore different model structures by modify the corresponding control file. In this respository, DLinear is supported.
+Train the data with a specific model, you may explore different model structures by modify the corresponding control file. In this repository, DLinear is supported.
 
 Run command
 ```bash
